@@ -56,7 +56,7 @@ class AdminSectionsServiceProvider extends ServiceProvider
         $this->app['router']->group(['prefix' => config('sleeping_owl.url_prefix'), 'middleware' => config('sleeping_owl.middleware')], function ($router) {
             $router->get('', ['as' => 'admin.dashboard', function () {
                 $content = 'Define your dashboard here.';
-                return AdminSection::view($content, 'Dashboard');
+                return \AdminSection::view($content, 'Dashboard');
             }]);
         });
     }
