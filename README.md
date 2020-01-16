@@ -24,6 +24,7 @@ SleepingOwl Admin is an administrative interface builder for Laravel.
 ## Install dev branch
 
 
+
   1. Run this command in the terminal:
   ```
   composer require mrubinitmegastarcom/autoadminlaravel
