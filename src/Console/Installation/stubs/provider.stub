@@ -2,6 +2,7 @@
 
 namespace __NAMESPACE__\Providers;
 
+use SleepingOwl\Admin\Navigation\Page;
 use SleepingOwl\Admin\Providers\AdminSectionsServiceProvider as ServiceProvider;
 
 class AdminSectionsServiceProvider extends ServiceProvider
@@ -23,7 +24,79 @@ class AdminSectionsServiceProvider extends ServiceProvider
     public function boot(\SleepingOwl\Admin\Admin $admin)
     {
     	//
-
+        $this->loadSections();
         parent::boot($admin);
+        $this->registerNRoutes();
+        $this->registerNavigation();
+        $this->registerMediaPackages();
+    }
+
+    /**
+     *
+     */
+    private function registerNavigation():void
+    {
+         \AdminNavigation::setFromArray([
+            [
+                'title' => trans('core.project.name'),
+                'icon' => 'fa fa-group',
+                'priority' => 1000,
+                'pages' => [
+                //(new Page(User::class))->setPriority(0),
+                ]
+            ]
+        ]);
+    }
+
+    /**
+     *
+     */
+    private function registerNRoutes():void
+    {
+        $this->app['router']->group(['prefix' => config('sleeping_owl.url_prefix'), 'middleware' => config('sleeping_owl.middleware')], function ($router) {
+            $router->get('', ['as' => 'admin.dashboard', function () {
+                $content = 'Define your dashboard here.';
+                return AdminSection::view($content, 'Dashboard');
+            }]);
+        });
+    }
+
+
+    /**
+     *
+     */
+    private function registerMediaPackages():void
+    {
+        \PackageManager::add('front.controllers')
+            ->js(null, asset('js/controllers.js'));
+    }
+
+    /**
+     *
+     */
+    private function loadSections():void
+    {
+        $paths = config('sleeping_owl.path_for_menu');
+        if($paths){
+            foreach($paths as $path) {
+                if(file_exists(app_path($path))){
+                    $files = array_diff(scandir(app_path($path)), ['..', '.']);
+                    foreach ($files as $file){
+                        $classNS = '__NAMESPACE__\\' . str_replace('/', '\\', $path) . '\\' . str_replace('.php', '', $file);
+                        try {
+                            $cls = new $classNS();
+                        } catch (\Throwable $e) {
+                            $cls = null;
+                        } catch (\Exception $e) {
+                             $cls = null;
+                        }
+                        if(!is_null($cls)){
+                            $classNameArr = explode('\\', $classNS);
+                            $this->sections[$classNS] = '__NAMESPACE__\Http\Sections\\' . $classNameArr[count($classNameArr)-1];
+                        }
+                    }
+                }
+            }
+        }
     }
 }
