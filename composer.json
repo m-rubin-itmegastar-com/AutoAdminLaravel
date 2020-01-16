@@ -1,5 +1,5 @@
 {
-    "name": "laravelrus/sleepingowl",
+    "name": "mrubinitmegastarcom/autoadminlaravel",
     "description": "Administrative interface builder for Laravel.",
     "homepage": "http://sleepingowladmin.ru",
     "keywords": [
@@ -16,24 +16,8 @@
     },
     "authors": [
         {
-            "name": "Sleeping Owl",
-            "email": "owl.sleeping@yahoo.com"
-        },
-        {
-            "name": "Pavel Buchnev",
-            "email": "butschster@gmail.com"
-        },
-        {
-            "name": "Dave Gabrielyan",
-            "email": "aioslike@gmail.com"
-        },
-        {
-            "name": "TheArdent",
-            "email": "oleksii.yaryi@gmail.com"
-        },
-        {
-            "name": "Daan",
-            "email": "daan@ukr.net"
+            "name": "it megastar",
+            "email": "admin@admin.admin"
         }
     ],
     "require": {
