@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputArgument;
 
 class SectionMake extends SectionGeneratorCommand
 {
+    const MAX_GRID_COLOMNS = 5;
     /**
      * The console command name.
      *
@@ -143,7 +144,7 @@ class SectionMake extends SectionGeneratorCommand
         $stub = $this->displayFiledGrid( ($crud['gridFields']??['id'=>'int']), $stub );
         $stub = $this->editColumsForm( ($crud['editFields']??['id'=>'int']), $stub );
         $stub = $this->changeTitle( ($crud['modelTitle']??null), $stub);
-        $stub = $this->changeTitle(($crud['menuIcon']??null), $stub);
+        $stub = $this->changeIcon(($crud['menuIcon']??null), $stub);
 
         return $stub;
     }
