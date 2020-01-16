@@ -26,13 +26,17 @@ SleepingOwl Admin is an administrative interface builder for Laravel.
 
 
   1. Run this command in the terminal:
-  ```
-  composer require mrubinitmegastarcom/autoadminlaravel
-  ```
-  2. Run command in the terminal for update assets:
-  ```
-  php artisan sleepingowl:update
-  ```
+    ```
+    composer require mrubinitmegastarcom/autoadminlaravel
+    ```
+  2. Run command in the terminal add config files: 
+    ```
+    php artisan sleepingowl:install
+    ```
+  3. Run command in the terminal for update assets:
+    ```
+    php artisan sleepingowl:update
+    ```
 
 
 
