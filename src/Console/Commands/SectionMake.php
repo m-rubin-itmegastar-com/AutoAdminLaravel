@@ -181,7 +181,7 @@ class SectionMake extends SectionGeneratorCommand
             $max = 0;
             foreach ($attrs as $key=>$attr){
                 if($max<=self::MAX_GRID_COLOMNS){
-                    $attrEdits[] = "\AdminColumn::".$this->getInputByType($attr)."('".$key."', '".$key."')";
+                    $attrEdits[] = "\AdminColumn::".$this->getInputByTypeGrid($attr)."('".$key."', '".$key."')";
                 } else {
                     break;
                 }
@@ -224,7 +224,7 @@ class SectionMake extends SectionGeneratorCommand
                 if(isset($enum[$key])){
                     $attrEdits[] = "\AdminFormElement::select('".$key."', '".$key."', ".$this->arrayToStrinf($enum[$key])." )";
                 } else{
-                    $attrEdits[] = "\AdminFormElement::".$this->getInputByType($attr)."('".$key."', '".$key."')";
+                    $attrEdits[] = "\AdminFormElement::".$this->getInputByTypeForm($attr)."('".$key."', '".$key."')";
                 }
 
             }
@@ -302,13 +302,28 @@ class SectionMake extends SectionGeneratorCommand
      * @param string $type
      * @return string
      */
-    protected function getInputByType(string $type)
+    protected function getInputByTypeForm(string $type)
     {
         switch ($type){
             case 'Carbon' : return 'datetime';
             case 'bool' : return 'checkbox';
             case 'array' : return 'checkbox';
             case 'int' : return 'number';
+            default: return 'text';
+        }
+    }
+
+    /**
+     * Устанавливаем вид в зависимости от типа
+     * @param string $type
+     * @return string
+     */
+    protected function getInputByTypeGrid(string $type)
+    {
+        switch ($type){
+            case 'Carbon' : return 'datetime';
+            case 'bool' : return 'checkbox';
+            case 'array' : return 'checkbox';
             default: return 'text';
         }
     }
