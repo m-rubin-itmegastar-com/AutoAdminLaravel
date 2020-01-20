@@ -7,7 +7,7 @@
     @remove="removeGroup"
     inline-template
 >
-    <div class="grouped-element" v-if="!removed">
+    <div class="grouped-element border px-4" v-if="!removed">
         <div class='grouped-element__head' v-if="label">
             <span><b>{{ $group->getLabel() }}</b></span>
         </div>

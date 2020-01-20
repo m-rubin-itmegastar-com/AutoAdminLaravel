@@ -3,6 +3,7 @@
 namespace SleepingOwl\Admin\Console\Commands;
 
 use Illuminate\Console\GeneratorCommand as SectionGeneratorCommand;
+use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\Console\Input\InputArgument;
 
 class SectionMake extends SectionGeneratorCommand
@@ -28,6 +29,14 @@ class SectionMake extends SectionGeneratorCommand
      * @var string
      */
     protected $type = 'Section';
+
+    /**
+     *
+     * Свойства для генерируемых полей
+     *
+     * @var array
+     */
+    private $property;
 
     /**
      * Determine if the class already exists.
@@ -100,12 +109,7 @@ class SectionMake extends SectionGeneratorCommand
     {
         $attrEdits = [];
         $arguments = $this->argument();
-        $crud = [
-            'gridFields'=>null,
-            'editFields'=>null,
-            'modelTitle'=>null,
-            'menuIcon'=>null,
-        ];
+
         if(!empty($arguments['model'])){
             $classBase = $arguments['model'];
             try {
@@ -119,17 +123,27 @@ class SectionMake extends SectionGeneratorCommand
 
             if(!is_null($cls) ){
                 try{
-                    $property = $cls->getProperty();
+                    $this->property = $cls->getProperty();
                 } catch (\BadMethodCallException $e){
-                    $property = null;
+                    $this->property = [
+                        'gridFields'=>null,
+                        'editFields'=>null,
+                        'modelTitle'=>null,
+                        'menuIcon'=>null,
+                        'enum'=>null,
+                        'relations'=>null,
+                    ];
                 }
 
-                if(!empty($property['crud'])) {
-                    $crud = $property['crud'];
-                    foreach ($crud as &$item){
-                        if(is_callable($item)){
-                            $item = $item($cls);
+                foreach ($this->property as &$sectionProp){
+                    if(is_array($sectionProp)){
+                        foreach ($sectionProp as &$prop){
+                            if(is_callable($prop)){
+                                $prop = $prop($cls);
+                            }
                         }
+                    }elseif(is_callable($sectionProp)){
+                        $sectionProp = $sectionProp($cls);
                     }
                 }
             }
@@ -141,10 +155,10 @@ class SectionMake extends SectionGeneratorCommand
         | Устанавливаем иконку
         | Обрабатываем разрешения (реализовать)
         */
-        $stub = $this->displayFiledGrid( ($crud['gridFields']??['id'=>'int']), $stub );
-        $stub = $this->editColumsForm( ($crud['editFields']??['id'=>'int']), $stub );
-        $stub = $this->changeTitle( ($crud['modelTitle']??null), $stub);
-        $stub = $this->changeIcon(($crud['menuIcon']??null), $stub);
+        $stub = $this->displayFiledGrid($stub);
+        $stub = $this->editColumsForm($stub);
+        $stub = $this->changeTitle($stub);
+        $stub = $this->changeIcon($stub);
 
         return $stub;
     }
@@ -155,9 +169,14 @@ class SectionMake extends SectionGeneratorCommand
      * @param $stub
      * @return string
      */
-    protected function displayFiledGrid(array $attrs, $stub):string
+    protected function displayFiledGrid($stub):string
     {
         $attrEdits = [];
+        $attrs= ['id'=>'int'];
+        if(!empty($this->property['crud'])){
+            $attrs = $this->property['crud']['gridFields'];
+        }
+
         if($attrs){
             $max = 0;
             foreach ($attrs as $key=>$attr){
@@ -182,18 +201,59 @@ class SectionMake extends SectionGeneratorCommand
      * @param $stub
      * @return string
      */
-    protected function editColumsForm(array $attrs, $stub):string
+    protected function editColumsForm($stub):string
     {
+        $attrs = ['id'=>'int'];
+        if(!empty($this->property['crud']) && !empty($this->property['crud']['editFields'])){
+            $attrs = $this->property['crud']['editFields'];
+        }
+
+        $enum = [];
+        if(!empty($this->property['enum'])){
+            $enum = $this->property['enum'];
+        }
+
+        $relations = [];
+        if(!empty($this->property['relations'])){
+            $relations = $this->property['relations'];
+        }
 
         $attrEdits = [];
         if($attrs){
             foreach ($attrs as $key=>$attr){
+                if(isset($enum[$key])){
+                    $attrEdits[] = "\AdminFormElement::select('".$key."', '".$key."', ".$this->arrayToStrinf($enum[$key])." )";
+                } else{
+                    $attrEdits[] = "\AdminFormElement::".$this->getInputByType($attr)."('".$key."', '".$key."')";
+                }
 
-                $attrEdits[] = "\AdminFormElement::".$this->getInputByType($attr)."('".$key."', '".$key."')";
+            }
+        }
+
+        $stub = str_replace('DummyColumnsFieldsStr', implode(", \n\t\t\t\t", $attrEdits), $stub);
+        $stub = str_replace('DummyColumnsFieldsArr', implode(", \n\t\t\t", $attrEdits), $stub);
+
+        if($relations){
+            foreach ($relations as $keyR=>$rel){
+                $class = $rel['class'];
+                try {
+                    $relFileds = $class::fields(true);
+                } catch (\Throwable $e) {
+                    $relFileds = null;
+                } catch (\Exception $e) {
+                    $relFileds = null;
+                }
+
+                if($relFileds){
+                    if($rel['relationOne']){
+                        $attrEdits[] = "\AdminFormElement::hasMany('" . $keyR . "', ". $relFileds ." )->setLabel('" . $keyR . "')";
+                    } else {
+                        $attrEdits[] = "\AdminFormElement::belongsTo('" . $keyR . "', ". $relFileds ." )->setLabel('" . $keyR . "')";
+                    }
+                }
             }
         }
         return str_replace('DummyColumnsEdit', implode(", \n\t\t\t", $attrEdits), $stub);
-
     }
 
     /**
@@ -202,8 +262,13 @@ class SectionMake extends SectionGeneratorCommand
      * @param $stub
      * @return string
      */
-    protected function changeTitle(string $title=null, $stub):string
+    protected function changeTitle($stub):string
     {
+        $title = null;
+        if(!empty($this->property['crud']) && !empty($this->property['crud']['modelTitle'])){
+            $title = $this->property['crud']['modelTitle'];
+        }
+
         if(!empty($title)){
             $titleReplace = "'" . $title . "'";
         } else {
@@ -219,10 +284,15 @@ class SectionMake extends SectionGeneratorCommand
      * @param $stub
      * @return string
      */
-    protected function changeIcon(string $icon=null, $stub):string
+    protected function changeIcon($stub):string
     {
+        $icon = null;
+        if(!empty($this->property['crud']) && !empty($this->property['crud']['menuIcon'])){
+            $icon = $this->property['crud']['menuIcon'];
+        }
+
         if(empty($icon)){
-            $titleReplace = 'fa fa-lightbulb-o';
+            $icon = 'fa fa-lightbulb-o';
         }
         return str_replace('DummyModelIcon', $icon, $stub);
     }
@@ -237,7 +307,27 @@ class SectionMake extends SectionGeneratorCommand
         switch ($type){
             case 'Carbon' : return 'datetime';
             case 'bool' : return 'checkbox';
+            case 'array' : return 'checkbox';
+            case 'int' : return 'number';
             default: return 'text';
         }
+    }
+
+    /**
+     * @param array $ar
+     * @return string
+     */
+    private function arrayToStrinf(array $ar): string
+    {
+        $s = '[';
+        foreach ($ar as $key => $item) {
+            if (is_array($item)) {
+                $s .= "'" . $key . "'" . '=> ' . $this->arrayToStrinf($item);
+            } else {
+                $s .= "'" . $key . "'" . '=>' . "'" . $item . "',";
+            }
+        }
+        $s .= ']';
+        return $s;
     }
 }

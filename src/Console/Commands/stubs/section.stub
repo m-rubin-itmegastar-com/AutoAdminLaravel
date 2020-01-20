@@ -88,4 +88,20 @@ class DummyClass extends Section implements Initializable
     {
         return true;
     }
+
+    /**
+     * @param bool $asString
+     * @return array|string
+     */
+    public static function fields($asString = false)
+    {
+        if($asString){
+            return "[
+                DummyColumnsFieldsStr
+            ]";
+        }
+        return [
+            DummyColumnsFieldsArr
+        ];
+    }
 }
