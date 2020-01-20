@@ -44,3 +44,27 @@ SleepingOwl Admin is an administrative interface builder for Laravel.
 
 Admin was written by Sleeping Owl for the Laravel framework and is released under the MIT License.
 See the LICENSE file for details.
+
+
+Config example 
+    /**
+     * @return array
+     */
+    public function getProperty():array
+    {
+        return [
+            'crud'=> [
+                'modelTitle' => 'Круиз',
+                'menuGroup' => 'Справочники',
+                'menuIcon' => 'fa fa-dashboard',
+                'gridFields' => $this->getDocAttributesType(),
+                'editFields' => $this->getDocAttributesType(),
+                'permission' => [],
+            ],
+            'relations'=> function($a){
+                return [
+                    'motorship'=>['class'=>Motorship::class, 'relationOne'=>true]
+                ];
+            }
+        ];
+    }
